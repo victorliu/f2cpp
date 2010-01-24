@@ -1,0 +1,27 @@
+#
+# f2cpp.pl - Converts Fortran 77 code to C++
+#
+# Unlike f2c, the output of f2cpp.pl may or may not compile, however,
+# only a small number of hand-tuned changes are typically needed.
+# The resulting code is much cleaner than f2c's output, and much closer
+# to the original intent of the original Fortran code.
+#
+# The resulting C++ code is very C-style; we basically only want C++
+# for its std::complex<> type and operator overloading.
+#
+# Assumes single subroutine per file, and that there are
+# no lines of significance above the subroutine declaration.
+#
+# TODOs:
+# - Make the first step of conversion breaking up the input into chunks
+#   delimited by subroutine boundaries. This will require full on parsing
+#   of blocks.
+# - Some declarations are generated incorrectly, like IZAMAX, whose array
+#   argument is never an array.
+# - Fix by-value argument passing of expressions (currently lets through
+#   things like (-&std::conj(tau)).
+# - Generate proper subroutine declarations for character arguments
+#   (should be const char *, not char).
+# - Determine const-ness of function declaration parameters through program
+#   analysis.
+#
