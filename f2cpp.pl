@@ -2,6 +2,11 @@
 #
 # f2cpp.pl - Converts Fortran 77 code to C++
 #
+# 2010-01-23 - Initial creation.
+# 2010-02-09 - Added replacement rule for mod(a, b).
+#              Fixed comment whitespace determination (I was using $#x
+#              instead of length($x).
+#
 # Unlike f2c, the output of f2cpp.pl may or may not compile, however,
 # only a small number of hand-tuned changes are typically needed.
 # The resulting code is much cleaner than f2c's output, and much closer
@@ -25,6 +30,9 @@
 #   (should be const char *, not char).
 # - Determine const-ness of function declaration parameters through program
 #   analysis.
+# - Collapse min(a,b,c) to min(a,min(b,c)), etc. for non-binary min/max.
+# - Detect instances of int(var) where var is a complex number. Replace with
+#   int(var.real())
 #
 # END_OF_README
 
@@ -519,7 +527,9 @@ sub replace_simple_intrinsics{
 		s/\bdconjg\b/std::conj/gi;
 		s/\bdble\b/std::real/gi;
 		s/\bdimag\b/std::imag/gi;
-		s/([^\:])?\babs\b/\1std::abs/gi;
+		s/([^\:])?\babs\b/\1std::abs/gi; # all abs go to std::abs
+		# Replace mod(a, b) with (a % b)
+		s/\bmod\s*\(\s*(\w+)\s*,\s*(\w+)\s*\)/(\1 % \2)/gi;
 	}
 }
 
@@ -835,7 +845,7 @@ sub format_comments{
 					my $leading_whitespace2 = $1;
 					$leading_whitespace2 =~ s/\t/    /g;
 					my $leading_whitespace = $leading_whitespace1;
-					if($#leading_whitespace2 > $#leading_whitespace1){
+					if(length($leading_whitespace2) > length($leading_whitespace1)){
 						$leading_whitespace = $leading_whitespace2;
 					}
 					#print "'$leading_whitespace'", length($leading_whitespace), "\n";
@@ -849,7 +859,7 @@ sub format_comments{
 					$$infile[$prev_noncomment_lineno] =~ /(\s*)/;
 					my $leading_whitespace = $1;
 					$leading_whitespace =~ s/\t/    /g;
-					if($#leading_whitespace < 3){
+					if(length($leading_whitespace) < 3){
 						$leading_whitespace = '// ';
 					}else{
 						$leading_whitespace =~ s/   $/\/\/ /;
@@ -860,7 +870,7 @@ sub format_comments{
 				$$infile[$next_noncomment_lineno] =~ /(\s*)/;
 				my $leading_whitespace = $1;
 				$leading_whitespace =~ s/\t/    /g;
-				if($#leading_whitespace < 3){
+				if(length($leading_whitespace) < 3){
 					$leading_whitespace = '// ';
 				}else{
 					$leading_whitespace =~ s/   $/\/\/ /;
