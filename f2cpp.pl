@@ -800,7 +800,7 @@ sub infer_types_correct_arrays{
 				$line =~ m/^\s*subroutine\s+(\w+)\s*\(\s*(.*)\s*\)\s*$/i;
 				$current_sub_info{'sub_name'} = $1;
 				$symbol_table{$1} = SUBROUTINE;
-				my @args = split(/,\s/, $2);
+				my @args = split(/[,\s]/, $2);
 				$current_sub_info{'sub_args'} = join(' ', @args);
 				$current_sub_info{'decl_line'} = $lineno;
 				foreach $arg (@args){
@@ -1313,8 +1313,8 @@ sub main{
 	my $prev_line = 0;
 	for(my $i = 1; $i <= $#infile; ++$i){
 		#print "~~~ " . $infile[$i] . "\n";
-		if($infile[$i] =~ /^\s*\$/){
-			$infile[$i] =~ s/^\s*\$\s*//;
+		if($infile[$i] =~ /^\s*[\$+]/){
+			$infile[$i] =~ s/^\s*[\$+]\s*//;
 			$infile[$prev_line] .= ' ' . $infile[$i];
 			# remove line $i from $infile
 			#print "Removing line " . $infile[$i]." : prev_line = $prev_line, i = $i\n";
